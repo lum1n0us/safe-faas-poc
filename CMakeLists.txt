@@ -24,8 +24,8 @@ execute_process(
 #
 # global options
 #
-# -pedantic?
-add_compile_options(-Wall -Wextra  -Werror)
+# too strict for now
+#add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 #
 # the glue layer and WAMR
@@ -34,8 +34,15 @@ set(WAMR_BUILD_AOT 0)
 set(WAMR_BUILD_SIMD 0)
 set(WAMR_BUILD_LIBC_BUILTIN 0)
 
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/wasm-micro-runtime/)
+
 add_library(wamr STATIC ${PROJECT_SOURCE_DIR}/library/src/glue.c)
-target_include_directories(wamr PUBLIC ${PROJECT_SOURCE_DIR}/library/include)
+target_include_directories(
+  wamr
+  PUBLIC
+    ${PROJECT_SOURCE_DIR}/library/include
+    ${PROJECT_SOURCE_DIR}/external/wasm-micro-runtime/core/iwasm/include
+)
 target_link_libraries(wamr iwasm_static)
 
 #
