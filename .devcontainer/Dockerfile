@@ -23,5 +23,22 @@ ENV GOPATH=/go
 ENV PATH=${PATH}:/usr/local/go/bin:${GOPATH}/bin
 
 # Install ego
+WORKDIR /tmp
 RUN wget https://github.com/edgelesssys/ego/releases/download/v1.0.1/ego_1.0.1_amd64.deb
 RUN apt install -y -f ./ego_1.0.1_amd64.deb
+
+# Install tinygo
+WORKDIR /tmp
+RUN wget https://github.com/tinygo-org/tinygo/releases/download/v0.26.0/tinygo_0.26.0_amd64.deb
+RUN dpkg -i tinygo_0.26.0_amd64.deb
+
+# Install cmake
+RUN wget --progress=dot:giga -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg > /dev/null \
+  && echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ bionic main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null \
+  && apt-get update \
+  && rm /usr/share/keyrings/kitware-archive-keyring.gpg \
+  && apt-get install -y kitware-archive-keyring --no-install-recommends \
+  && apt-get install -y cmake --no-install-recommends
+
+# clean apt cached
+RUN apt-get clean -y && rm -rf /var/lib/apt/lists/*
