@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
 # [Optional] Uncomment this section to install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends build-essential libssl-dev
+  && apt-get -y install --no-install-recommends build-essential libssl-dev
 
 # Install sgx
 RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add
@@ -16,8 +16,8 @@ RUN chmod +x sgx_linux_x64_sdk_2.17.100.3.bin && ./sgx_linux_x64_sdk_2.17.100.3.
 
 # Install go
 WORKDIR /tmp
-RUN wget https://go.dev/dl/go1.19.3.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go1.19.3.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.19.4.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.19.4.linux-amd64.tar.gz
 RUN mkdir /go && chmod a+wx /go
 ENV GOPATH=/go
 ENV PATH=${PATH}:/usr/local/go/bin:${GOPATH}/bin
@@ -50,8 +50,23 @@ RUN apt-get update \
 RUN wget https://apt.llvm.org/llvm.sh && chmod a+x ./llvm.sh
 RUN ./llvm.sh 14 all
 
+# Install wabt
+#install wabt
+ARG WABT_VER=1.0.31
+RUN wget -c --progress=dot:giga https://github.com/WebAssembly/wabt/releases/download/${WABT_VER}/wabt-${WABT_VER}-ubuntu.tar.gz -P /opt \
+  && tar xf /opt/wabt-${WABT_VER}-ubuntu.tar.gz -C /opt \
+  && ln -fs /opt/wabt-${WABT_VER} /opt/wabt \
+  && rm /opt/wabt-${WABT_VER}-ubuntu.tar.gz
+
+# Install wasi-sdk
+ARG WASI_SDK_VER=16
+RUN wget -c --progress=dot:giga https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER}/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz -P /opt \
+  && tar xf /opt/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz -C /opt \
+  && ln -fs /opt/wasi-sdk-${WASI_SDK_VER}.0 /opt/wasi-sdk \
+  && rm /opt/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz
+
 # set path and use clang by default
-ENV PATH="/usr/lib/llvm-14/bin:${PATH}"
+ENV PATH="/usr/lib/llvm-14/bin:/opt/wabt-${WABT_VER}/bin:${PATH}"
 ENV CC=/usr/lib/llvm-14/bin/clang CXX=/usr/lib/llvm-14/bin/clang++
 
 # clean apt cached

@@ -16,6 +16,10 @@ find_package(TinyGo)
 find_package(EGo)
 find_package(OpenEnclave)
 find_package(SGX)
+find_package(WASISDK)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  find_package(WABT)
+endif()
 
 execute_process(
   COMMAND git submodule update --init wasm-micro-runtime
@@ -43,18 +47,77 @@ target_include_directories(
     ${PROJECT_SOURCE_DIR}/library/include
     ${PROJECT_SOURCE_DIR}/external/wasm-micro-runtime/core/iwasm/include
 )
-target_link_libraries(wamr iwasm_static)
 
 #
-# the Go application
+# Standalone: glue + Wasm
+#
+add_executable(standalone ${PROJECT_SOURCE_DIR}/library/src/glue.c)
+target_include_directories(
+  standalone
+  PUBLIC
+    ${PROJECT_SOURCE_DIR}/library/include
+    ${PROJECT_SOURCE_DIR}/external/wasm-micro-runtime/core/iwasm/include
+)
+target_compile_definitions(standalone PRIVATE STANDALONE)
+target_link_libraries(standalone iwasm_static -lm -lpthread)
+add_dependencies(standalone cwasmbuild)
+
+#
+# the Go server
 #
 add_custom_command(
-  OUTPUT go_app.go
+  OUTPUT go_server.go
   DEPENDS ${PROJECT_SOURCE_DIR}/app/server/main.go
-  COMMAND ego-go build -o go_app.go ${PROJECT_SOURCE_DIR}/app/server/main.go && ego sign go_app.go
+  COMMAND ego-go build -o go_server.go ${PROJECT_SOURCE_DIR}/app/server/main.go  && ego sign go_server.go
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-add_custom_target(goappbuild ALL DEPENDS go_app.go)
+add_custom_target(goserverbuild ALL DEPENDS go_server.go)
+add_dependencies(goserverbuild wamr iwasm_static)
+
+#
+# Application: Go -> Wasm
+#
+add_custom_command(
+  OUTPUT go_faas.wasm
+  DEPENDS ${PROJECT_SOURCE_DIR}/app/wasm/main.go
+  COMMAND tinygo build --target wasi -o go_faas.wasm ${PROJECT_SOURCE_DIR}/app/wasm/main.go
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_custom_target(gowasmbuild ALL DEPENDS go_faas.wasm)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # need to use dump information to confirm exported item indexes
+  add_custom_command(
+    OUTPUT go_faas.dump
+    DEPENDS go_faas.wasm
+    COMMAND wasm-objdump -dx go_faas.wasm > go_faas.dump
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  add_custom_target(gowasmdumpbuild ALL DEPENDS go_faas.dump)
+endif()
+
+#
+# Application: C -> Wasm
+#
+add_custom_command(
+  OUTPUT c_faas.wasm
+  DEPENDS ${PROJECT_SOURCE_DIR}/app/wasm/main.c
+  COMMAND /opt/wasi-sdk-16.0/bin/clang --target=wasm32-wasi --sysroot=/opt/wasi-sdk-16.0/share/wasi-sysroot/ -mexec-model=reactor -mbulk-memory -Wl,--export=malloc,--export=free ${PROJECT_SOURCE_DIR}/app/wasm/main.c -o c_faas.wasm
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_custom_target(cwasmbuild ALL DEPENDS c_faas.wasm)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # need to use dump information to confirm exported item indexes
+  add_custom_command(
+    OUTPUT c_faas.dump
+    DEPENDS c_faas.wasm
+    COMMAND wasm-objdump -dx c_faas.wasm > c_faas.dump
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  add_custom_target(cwasmdumpbuild ALL DEPENDS c_faas.dump)
+endif()
+
 
 #
 # Install
@@ -64,8 +127,15 @@ add_custom_target(goappbuild ALL DEPENDS go_app.go)
 # Tests
 #
 enable_testing()
+
+add_test(
+  NAME standalone-test
+  COMMAND ./standalone
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
 add_test(
   NAME smoking-test
-  COMMAND ${CMAKE_COMMAND} -E env OE_SIMULATION=1 ego run go_app.go
+  COMMAND ${CMAKE_COMMAND} -E env OE_SIMULATION=1 ego run go_server.go
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
