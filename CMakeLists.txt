@@ -28,12 +28,37 @@ execute_process(
 add_compile_options(-Wall -Wextra  -Werror)
 
 #
-# iwasm_static
+# the glue layer and WAMR
 #
 set(WAMR_BUILD_AOT 0)
 set(WAMR_BUILD_SIMD 0)
 set(WAMR_BUILD_LIBC_BUILTIN 0)
 
-add_subdirectory(external/wasm-micro-runtime)
-add_custom_target(wamr_static_library)
-add_dependencies(wamr_static_library iwasm_static)
+add_library(wamr STATIC ${PROJECT_SOURCE_DIR}/library/src/glue.c)
+target_include_directories(wamr PUBLIC ${PROJECT_SOURCE_DIR}/library/include)
+target_link_libraries(wamr iwasm_static)
+
+#
+# the Go application
+#
+add_custom_command(
+  OUTPUT go_app.go
+  DEPENDS ${PROJECT_SOURCE_DIR}/app/server/main.go
+  COMMAND ego-go build -o go_app.go ${PROJECT_SOURCE_DIR}/app/server/main.go && ego sign go_app.go
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_custom_target(goappbuild ALL DEPENDS go_app.go)
+
+#
+# Install
+#
+
+#
+# Tests
+#
+enable_testing()
+add_test(
+  NAME smoking-test
+  COMMAND ${CMAKE_COMMAND} -E env OE_SIMULATION=1 ego run go_app.go
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

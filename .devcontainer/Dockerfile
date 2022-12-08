@@ -40,5 +40,19 @@ RUN wget --progress=dot:giga -O - https://apt.kitware.com/keys/kitware-archive-l
   && apt-get install -y kitware-archive-keyring --no-install-recommends \
   && apt-get install -y cmake --no-install-recommends
 
+# Install clang and llvm
+WORKDIR /etc/apt/apt.conf.d
+RUN touch 99verfiy-peer.conf \
+  && echo "Acquire { https::Verify-Peer false }" > 99verfiy-peer.conf
+WORKDIR /tmp
+RUN apt-get update \
+  && apt-get install -y apt-transport-https apt-utils build-essential lsb-release wget software-properties-common gnupg
+RUN wget https://apt.llvm.org/llvm.sh && chmod a+x ./llvm.sh
+RUN ./llvm.sh 14 all
+
+# set path and use clang by default
+ENV PATH="/usr/lib/llvm-14/bin:${PATH}"
+ENV CC=/usr/lib/llvm-14/bin/clang CXX=/usr/lib/llvm-14/bin/clang++
+
 # clean apt cached
 RUN apt-get clean -y && rm -rf /var/lib/apt/lists/*

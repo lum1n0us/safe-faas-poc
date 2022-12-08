@@ -1,4 +1,7 @@
 {
     "cmake.configureOnOpen": false,
-    "files.trimTrailingWhitespace": true
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "git.detectSubmodules": false,
+    "git.ignoreSubmodules": true
 }
