@@ -32,3 +32,4 @@
 - [ ] ./cmake/FindWABT.cmake:message(STATUS "TBD: seach WABT")
 - [ ] ./cmake/FindWASISDK.cmake:message(STATUS "TBD: seach WASI SDK")
 - [ ] ./library/src/glue.c: // TBD: replace with go_faas.wasm
+- [ ] shall I dynamically generate the value of `mounts.source` in _config.json_?

@@ -59,6 +59,8 @@ add_custom_command(
   COMMAND  openssl genrsa -out private.pem -3 3072
             && ego-go build -o go_server ${PROJECT_SOURCE_DIR}/app/server/main.go
             && ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/app/server/config.json config.json
+            && ${CMAKE_COMMAND} -E make_directory data/wasm_modules/
+            && ${CMAKE_COMMAND} -E copy c_faas.wasm data/wasm_modules/
             && ego sign config.json
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -94,8 +96,6 @@ add_custom_command(
   OUTPUT c_faas.wasm
   DEPENDS ${PROJECT_SOURCE_DIR}/app/wasm/main.c
   COMMAND /opt/wasi-sdk-16.0/bin/clang --target=wasm32-wasi --sysroot=/opt/wasi-sdk-16.0/share/wasi-sysroot/ -mexec-model=reactor -mbulk-memory -Wl,--export=malloc,--export=free ${PROJECT_SOURCE_DIR}/app/wasm/main.c -o c_faas.wasm
-            && ${CMAKE_COMMAND} -E make_directory wasm_modules
-            && ${CMAKE_COMMAND} -E copy c_faas.wasm wasm_modules/
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_custom_target(cwasmbuild ALL DEPENDS c_faas.wasm)
@@ -123,8 +123,8 @@ enable_testing()
 
 add_test(
   NAME standalone-test
-  COMMAND ./go_server
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMAND ../go_server
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data
 )
 
 add_test(

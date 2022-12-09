@@ -4,10 +4,18 @@
   "debug": true,
   "heapSize": 10240,
   "executableHeap": true,
-  "files": [
+  "mounts": [
     {
-      "source": "./wasm_modules/c_faas.wasm",
-      "target": "/wasm_modules/c_faas.wasm"
+      "source": "/workspaces/safe-faas-poc/build/data",
+      "target": "/data",
+      "type": "hostfs",
+      "readOnly": false
+    }
+  ],
+  "env": [
+    {
+      "name": "PWD",
+      "value": "/data"
     }
   ]
 }
