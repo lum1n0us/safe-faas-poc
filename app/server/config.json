@@ -2,7 +2,7 @@
   "exe": "go_server",
   "key": "private.pem",
   "debug": true,
-  "heapSize": 512,
+  "heapSize": 10240,
   "executableHeap": true,
   "files": [
     {

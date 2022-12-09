@@ -39,8 +39,6 @@ set(WAMR_BUILD_SIMD 0)
 set(WAMR_BUILD_LIBC_BUILTIN 0)
 # init fd table failed
 set(WAMR_BUILD_LIBC_WASI 0)
-# mmap memory failed
-set(WAMR_DISABLE_HW_BOUND_CHECK 1)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/wasm-micro-runtime/ EXCLUDE_FROM_ALL)
 
