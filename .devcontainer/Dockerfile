@@ -68,6 +68,9 @@ RUN wget -c --progress=dot:giga https://github.com/WebAssembly/wasi-sdk/releases
 # set path and use clang by default
 ENV PATH="/usr/lib/llvm-14/bin:/opt/wabt-${WABT_VER}/bin:${PATH}"
 ENV CC=/usr/lib/llvm-14/bin/clang CXX=/usr/lib/llvm-14/bin/clang++
+ENV SGX_SDK=/opt/intel/sgx/sgxsdk PATH=$PATH:$SGX_SDK/bin:$SGX_SDK/bin/x64 \
+  PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$SGX_SDK/pkgconfig \
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
 
 # clean apt cached
 RUN apt-get clean -y && rm -rf /var/lib/apt/lists/*

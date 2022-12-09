@@ -2,7 +2,7 @@ package main
 
 /*
 #cgo CFLAGS: -g -Wall -I${SRCDIR}/../../library/include/
-#cgo LDFLAGS: -L${SRCDIR}/../../build/ -L${SRCDIR}/../../build/external/wasm-micro-runtime
+#cgo LDFLAGS: -L${SRCDIR}/../../build/ -L${SRCDIR}/../../build/external/wasm-micro-runtime/
 #cgo LDFLAGS: -l:libwamr.a -l:libvmlib.a -lm
 #include <stdlib.h>
 #include "glue.h"
@@ -52,7 +52,6 @@ func echoFromWAMR() {
 	}
 }
 
-// TBD: How to access .wasm in enclave
 func echoFromWASM() {
 	name := C.CString("Go App")
 	defer C.free(unsafe.Pointer(name))

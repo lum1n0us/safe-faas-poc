@@ -1,0 +1,13 @@
+{
+  "exe": "go_server",
+  "key": "private.pem",
+  "debug": true,
+  "heapSize": 512,
+  "executableHeap": true,
+  "files": [
+    {
+      "source": "./wasm_modules/c_faas.wasm",
+      "target": "/wasm_modules/c_faas.wasm"
+    }
+  ]
+}

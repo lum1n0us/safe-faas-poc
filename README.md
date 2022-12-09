@@ -12,13 +12,16 @@
 > `find . -type f -not -path "./.git/*" -not -path "./external/wasm-micro-runtime/*" -not -path "./build/*" -not -path "./README.md" | xargs grep "\<TBD\>" | sort`
 
 - [ ] use Golang to write glue
-- [ ] access .wasm in EGo
 - [ ] write .wasm with Golang and control its exported items
 - [ ] write .wasm with Golang and passing strings
-- [ ] test WASI interfaces
+- [x] access .wasm in EGo
+- [ ] use `mounts` instead of `files` in ego configration
+- [ ] is there a way to call mmap() (wasm_runtime_instantiate)
+- [ ] is there a way to resolve _init fd table failed?_
+- [ ] test WASI interfaces or WASI from glue?
 - [x] ./app/server/main.go: fmt.Println("TBD: talk with wamr")
-- [ ] ./app/server/main.go: fmt.Println("TBD: talk with .wasm")
-- [ ] ./app/server/main.go:// TBD: How to access .wasm in enclave
+- [x] ./app/server/main.go: fmt.Println("TBD: talk with .wasm")
+- [x] ./app/server/main.go:// TBD: How to access .wasm in enclave
 - [ ] ./app/wasm/main.go:// TBD: resturn a string
 - [ ] ./app/wasm/main.go:// TBD: as WASI reactor
 - [ ] ./cmake/FindEGo.cmake:message(STATUS "TBD: seach ego")

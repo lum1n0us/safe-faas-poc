@@ -77,7 +77,7 @@ int echo_from_wasm(const char *name, char *out) {
   printf("Loading binary...\n");
   wasm_byte_vec_t binary = {0};
   // TBD: replace with go_faas.wasm
-  const char *file_name = "c_faas.wasm";
+  const char *file_name = "wasm_modules/c_faas.wasm";
   if (!load_wasm_file_content(file_name, &binary))
     goto release_store;
 
@@ -93,10 +93,19 @@ int echo_from_wasm(const char *name, char *out) {
   // Instantiate.
   printf("Instantiating module...\n");
   wasm_extern_vec_t imports = WASM_EMPTY_VEC;
-  wasm_instance_t *instance = wasm_instance_new(store, module, &imports, NULL);
+  wasm_trap_t *trap = NULL;
+  wasm_instance_t *instance = wasm_instance_new(store, module, &imports, &trap);
   if (!instance) {
     printf("> Error instantiating module!\n");
     goto release_module;
+  }
+
+  if (trap) {
+    wasm_name_t message = {0};
+    wasm_trap_message(trap, &message);
+    printf("> Error instantitaing module %s\n", message.data);
+    wasm_name_delete(&message);
+    wasm_trap_delete(trap);
   }
 
   // Extract export.
@@ -205,16 +214,3 @@ release_engine:
 quit:
   return ret;
 }
-
-#ifdef STANDALONE
-int main() {
-  char out[128] = {0};
-  int ret = echo_from_wasm("Tester", out);
-
-  if (!ret)
-    return EXIT_FAILURE;
-
-  printf("%s\n", out);
-  return EXIT_SUCCESS;
-}
-#endif
