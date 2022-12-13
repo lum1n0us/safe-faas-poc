@@ -55,14 +55,12 @@ RUN ./llvm.sh 14 all
 ARG WABT_VER=1.0.31
 RUN wget -c --progress=dot:giga https://github.com/WebAssembly/wabt/releases/download/${WABT_VER}/wabt-${WABT_VER}-ubuntu.tar.gz -P /opt \
   && tar xf /opt/wabt-${WABT_VER}-ubuntu.tar.gz -C /opt \
-  && ln -fs /opt/wabt-${WABT_VER} /opt/wabt \
   && rm /opt/wabt-${WABT_VER}-ubuntu.tar.gz
 
 # Install wasi-sdk
 ARG WASI_SDK_VER=16
 RUN wget -c --progress=dot:giga https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER}/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz -P /opt \
   && tar xf /opt/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz -C /opt \
-  && ln -fs /opt/wasi-sdk-${WASI_SDK_VER}.0 /opt/wasi-sdk \
   && rm /opt/wasi-sdk-${WASI_SDK_VER}.0-linux.tar.gz
 
 # set path and use clang by default

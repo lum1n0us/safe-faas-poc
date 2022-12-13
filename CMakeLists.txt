@@ -11,14 +11,14 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #
 # dependencies
 #
-find_package(Go)
-find_package(TinyGo)
-find_package(EGo)
 find_package(OpenEnclave)
 find_package(SGX)
-find_package(WASISDK)
+find_package(Go REQUIRED)
+find_package(TinyGo REQUIRED)
+find_package(EGo REQUIRED)
+find_package(WASISDK 16.0 REQUIRED)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  find_package(WABT)
+  find_package(WABT 1.0.31 REQUIRED)
 endif()
 
 execute_process(
@@ -57,11 +57,11 @@ add_custom_command(
   OUTPUT go_server
   DEPENDS ${PROJECT_SOURCE_DIR}/app/server/main.go
   COMMAND  openssl genrsa -out private.pem -3 3072
-            && ego-go build -o go_server ${PROJECT_SOURCE_DIR}/app/server/main.go
+            && ${EGo_Go_COMMAND} build -o go_server ${PROJECT_SOURCE_DIR}/app/server/main.go
             && ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/app/server/config.json config.json
             && ${CMAKE_COMMAND} -E make_directory data/wasm_modules/
             && ${CMAKE_COMMAND} -E copy c_faas.wasm data/wasm_modules/
-            && ego sign config.json
+            && ${EGo_COMMAND} sign config.json
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_custom_target(goserverbuild ALL DEPENDS go_server)
@@ -73,7 +73,7 @@ add_dependencies(goserverbuild wamr iwasm_static cwasmbuild)
 add_custom_command(
   OUTPUT go_faas.wasm
   DEPENDS ${PROJECT_SOURCE_DIR}/app/wasm/main.go
-  COMMAND tinygo build --target wasi -o go_faas.wasm ${PROJECT_SOURCE_DIR}/app/wasm/main.go
+  COMMAND ${TinyGo_COMMAND} build --target wasi -o go_faas.wasm ${PROJECT_SOURCE_DIR}/app/wasm/main.go
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_custom_target(gowasmbuild ALL DEPENDS go_faas.wasm)
@@ -83,7 +83,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_custom_command(
     OUTPUT go_faas.dump
     DEPENDS go_faas.wasm
-    COMMAND wasm-objdump -dx go_faas.wasm > go_faas.dump
+    COMMAND ${WABT_WASM_OBJDUMP_COMMAND} -dx go_faas.wasm > go_faas.dump
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   add_custom_target(gowasmdumpbuild ALL DEPENDS go_faas.dump)
@@ -105,7 +105,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_custom_command(
     OUTPUT c_faas.dump
     DEPENDS c_faas.wasm
-    COMMAND wasm-objdump -dx c_faas.wasm > c_faas.dump
+    COMMAND ${WABT_WASM_OBJDUMP_COMMAND} -dx c_faas.wasm > c_faas.dump
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   add_custom_target(cwasmdumpbuild ALL DEPENDS c_faas.dump)
@@ -129,6 +129,6 @@ add_test(
 
 add_test(
   NAME smoking-test
-  COMMAND ${CMAKE_COMMAND} -E env OE_SIMULATION=1 ego run go_server
+  COMMAND ${CMAKE_COMMAND} -E env OE_SIMULATION=1 ${EGo_COMMAND} run go_server
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
