@@ -55,8 +55,9 @@ target_include_directories(
 #
 add_custom_command(
   OUTPUT go_server
-  DEPENDS ${PROJECT_SOURCE_DIR}/app/server/main.go
+  DEPENDS ${PROJECT_SOURCE_DIR}/app/server/main.go iwasm_static
   COMMAND  openssl genrsa -out private.pem -3 3072
+            && ${CMAKE_COMMAND} -E rm -f ./go_server
             && ${EGo_Go_COMMAND} build -o go_server ${PROJECT_SOURCE_DIR}/app/server/main.go
             && ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/app/server/config.json config.json
             && ${CMAKE_COMMAND} -E make_directory data/wasm_modules/
